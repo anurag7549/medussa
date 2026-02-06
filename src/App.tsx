@@ -20,8 +20,8 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
+      <AuthProvider>
+        <BrowserRouter>
           <CartProvider>
             <Sonner position="top-center" />
             <div className="flex min-h-screen flex-col">
@@ -42,8 +42,8 @@ const App = () => (
               <CartDrawer />
             </div>
           </CartProvider>
-        </AuthProvider>
-      </BrowserRouter>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
