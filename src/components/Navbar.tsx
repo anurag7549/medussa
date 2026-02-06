@@ -1,21 +1,30 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Menu, X, Search } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ShoppingBag, Menu, X, Search, User, LogOut } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { totalItems, openCart } = useCart();
+  const { user, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/products', label: 'Shop' },
+    ...(user ? [{ href: '/orders', label: 'Orders' }] : []),
   ];
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
   };
 
   return (
@@ -28,16 +37,12 @@ export function Navbar() {
             className="btn-ghost lg:hidden"
             aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
           {/* Logo */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="font-display text-2xl font-semibold tracking-tight text-foreground transition-colors hover:text-accent"
           >
             ATELIER
@@ -50,9 +55,7 @@ export function Navbar() {
                 key={link.href}
                 to={link.href}
                 className={`text-sm font-medium transition-colors hover:text-accent ${
-                  isActive(link.href)
-                    ? 'text-foreground'
-                    : 'text-muted-foreground'
+                  isActive(link.href) ? 'text-foreground' : 'text-muted-foreground'
                 }`}
               >
                 {link.label}
@@ -66,18 +69,34 @@ export function Navbar() {
               <Search className="h-5 w-5" />
             </Link>
 
-            <button
-              onClick={openCart}
-              className="btn-ghost relative"
-              aria-label="Open cart"
-            >
-              <ShoppingBag className="h-5 w-5" />
-              {totalItems > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-medium text-accent-foreground">
-                  {totalItems > 9 ? '9+' : totalItems}
-                </span>
-              )}
-            </button>
+            {user ? (
+              <>
+                <button
+                  onClick={openCart}
+                  className="btn-ghost relative"
+                  aria-label="Open cart"
+                >
+                  <ShoppingBag className="h-5 w-5" />
+                  {totalItems > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-medium text-accent-foreground">
+                      {totalItems > 9 ? '9+' : totalItems}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="btn-ghost"
+                  aria-label="Sign out"
+                  title="Sign out"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </>
+            ) : (
+              <Link to="/auth" className="btn-ghost">
+                <User className="h-5 w-5" />
+              </Link>
+            )}
           </div>
         </div>
 
@@ -91,14 +110,31 @@ export function Navbar() {
                   to={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-2 py-2 text-sm font-medium transition-colors hover:text-accent ${
-                    isActive(link.href)
-                      ? 'text-foreground'
-                      : 'text-muted-foreground'
+                    isActive(link.href) ? 'text-foreground' : 'text-muted-foreground'
                   }`}
                 >
                   {link.label}
                 </Link>
               ))}
+              {user ? (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleSignOut();
+                  }}
+                  className="px-2 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:text-accent"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <Link
+                  to="/auth"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="px-2 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent"
+                >
+                  Sign In
+                </Link>
+              )}
             </div>
           </div>
         )}

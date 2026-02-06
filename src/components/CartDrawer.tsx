@@ -48,14 +48,14 @@ export function CartDrawer() {
   return (
     <>
       {/* Overlay */}
-      <div 
-        className="overlay animate-fade-in" 
+      <div
+        className="overlay animate-fade-in"
         onClick={closeCart}
         aria-hidden="true"
       />
 
       {/* Drawer */}
-      <aside 
+      <aside
         className="cart-drawer fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-background sm:max-w-md animate-slide-in-right"
         role="dialog"
         aria-label="Shopping cart"
@@ -103,14 +103,14 @@ export function CartDrawer() {
                 {items.map((item) => (
                   <li key={item.id} className="flex gap-4">
                     {/* Image */}
-                    <Link 
-                      to={`/product/${item.id}`}
+                    <Link
+                      to={`/product/${item.product_id}`}
                       onClick={closeCart}
                       className="h-24 w-20 flex-shrink-0 overflow-hidden rounded-md bg-secondary"
                     >
                       <img
-                        src={item.image}
-                        alt={item.title}
+                        src={item.product.image || '/placeholder.svg'}
+                        alt={item.product.title}
                         className="h-full w-full object-cover"
                       />
                     </Link>
@@ -119,21 +119,21 @@ export function CartDrawer() {
                     <div className="flex flex-1 flex-col">
                       <div className="flex justify-between">
                         <div>
-                          <Link 
-                            to={`/product/${item.id}`}
+                          <Link
+                            to={`/product/${item.product_id}`}
                             onClick={closeCart}
                             className="font-medium hover:text-accent"
                           >
-                            {item.title}
+                            {item.product.title}
                           </Link>
                           <p className="mt-0.5 text-sm text-muted-foreground">
-                            {item.category}
+                            {item.product.category}
                           </p>
                         </div>
                         <button
                           onClick={() => removeFromCart(item.id)}
                           className="btn-ghost h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                          aria-label={`Remove ${item.title} from cart`}
+                          aria-label={`Remove ${item.product.title} from cart`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -147,7 +147,7 @@ export function CartDrawer() {
                           size="sm"
                         />
                         <span className="font-medium">
-                          {formatPrice(item.price * item.quantity)}
+                          {formatPrice(item.product.price * item.quantity)}
                         </span>
                       </div>
                     </div>
