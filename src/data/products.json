@@ -1,0 +1,135 @@
+[
+  {
+    "id": 1,
+    "title": "Classic Leather Jacket",
+    "image": "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=600&fit=crop",
+    "price": 299.99,
+    "originalPrice": 399.99,
+    "category": "Outerwear",
+    "description": "Timeless leather jacket crafted from premium full-grain leather. Features a classic silhouette with modern tailoring for the perfect fit.",
+    "featured": true,
+    "rating": 4.8,
+    "reviews": 124
+  },
+  {
+    "id": 2,
+    "title": "Cashmere Blend Sweater",
+    "image": "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop",
+    "price": 189.99,
+    "category": "Knitwear",
+    "description": "Luxuriously soft cashmere blend sweater with a relaxed fit. Perfect for layering or wearing on its own.",
+    "featured": true,
+    "rating": 4.9,
+    "reviews": 89
+  },
+  {
+    "id": 3,
+    "title": "Tailored Wool Trousers",
+    "image": "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&h=600&fit=crop",
+    "price": 159.99,
+    "category": "Bottoms",
+    "description": "Elegant wool trousers with a tailored fit. Features a high waist and straight leg for a sophisticated silhouette.",
+    "featured": true,
+    "rating": 4.7,
+    "reviews": 67
+  },
+  {
+    "id": 4,
+    "title": "Minimalist Canvas Tote",
+    "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&h=600&fit=crop",
+    "price": 89.99,
+    "category": "Accessories",
+    "description": "Durable canvas tote bag with leather handles. Spacious interior with multiple pockets for organization.",
+    "featured": true,
+    "rating": 4.6,
+    "reviews": 203
+  },
+  {
+    "id": 5,
+    "title": "Silk Button-Down Shirt",
+    "image": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&h=600&fit=crop",
+    "price": 199.99,
+    "category": "Tops",
+    "description": "Elegant silk shirt with mother-of-pearl buttons. Lightweight and breathable for year-round wear.",
+    "featured": false,
+    "rating": 4.8,
+    "reviews": 56
+  },
+  {
+    "id": 6,
+    "title": "Premium Denim Jeans",
+    "image": "https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&h=600&fit=crop",
+    "price": 129.99,
+    "category": "Bottoms",
+    "description": "High-quality selvedge denim with a modern slim fit. Crafted for durability and comfort.",
+    "featured": false,
+    "rating": 4.7,
+    "reviews": 312
+  },
+  {
+    "id": 7,
+    "title": "Merino Wool Cardigan",
+    "image": "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600&h=600&fit=crop",
+    "price": 169.99,
+    "category": "Knitwear",
+    "description": "Soft merino wool cardigan with horn buttons. Perfect for transitional weather and layering.",
+    "featured": false,
+    "rating": 4.5,
+    "reviews": 78
+  },
+  {
+    "id": 8,
+    "title": "Leather Chelsea Boots",
+    "image": "https://images.unsplash.com/photo-1638247025967-b4e38f787b76?w=600&h=600&fit=crop",
+    "price": 279.99,
+    "category": "Footwear",
+    "description": "Classic Chelsea boots in supple Italian leather. Features elastic side panels and a comfortable sole.",
+    "featured": true,
+    "rating": 4.9,
+    "reviews": 145
+  },
+  {
+    "id": 9,
+    "title": "Linen Summer Dress",
+    "image": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=600&fit=crop",
+    "price": 149.99,
+    "category": "Dresses",
+    "description": "Breezy linen dress perfect for warm weather. Features a relaxed fit with subtle pleating details.",
+    "featured": false,
+    "rating": 4.6,
+    "reviews": 92
+  },
+  {
+    "id": 10,
+    "title": "Structured Blazer",
+    "image": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&h=600&fit=crop",
+    "price": 249.99,
+    "category": "Outerwear",
+    "description": "Impeccably tailored blazer with a modern cut. Perfect for both professional and casual occasions.",
+    "featured": true,
+    "rating": 4.8,
+    "reviews": 87
+  },
+  {
+    "id": 11,
+    "title": "Cotton Oxford Shirt",
+    "image": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&h=600&fit=crop",
+    "price": 89.99,
+    "category": "Tops",
+    "description": "Classic Oxford shirt in premium cotton. A wardrobe essential with timeless appeal.",
+    "featured": false,
+    "rating": 4.5,
+    "reviews": 234
+  },
+  {
+    "id": 12,
+    "title": "Leather Crossbody Bag",
+    "image": "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&h=600&fit=crop",
+    "price": 179.99,
+    "category": "Accessories",
+    "description": "Compact leather crossbody bag with adjustable strap. Perfect for everyday essentials.",
+    "featured": false,
+    "rating": 4.7,
+    "reviews": 156
+  }
+]
