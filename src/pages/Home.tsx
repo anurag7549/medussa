@@ -1,51 +1,19 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Shield, RefreshCw } from 'lucide-react';
-import axios from 'axios';
-import { Product } from '@/context/CartContext';
+import type { Product } from '@/lib/types';
 import { ProductCard } from '@/components/ProductCard';
 import { PageLoader } from '@/components/Loader';
-import productsData from '@/data/products.json';
+import { useProducts } from '@/hooks/useProducts';
 
 export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products, loading } = useProducts();
 
-  useEffect(() => {
-    // Simulate API call with axios
-    const fetchProducts = async () => {
-      try {
-        // Simulating API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        // Using imported JSON data as if from API
-        const featured = productsData.filter(p => p.featured).slice(0, 4);
-        setFeaturedProducts(featured as Product[]);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
+  const featuredProducts = products.filter((p) => p.featured).slice(0, 4);
 
   const features = [
-    {
-      icon: Truck,
-      title: 'Free Shipping',
-      description: 'On orders over $150',
-    },
-    {
-      icon: Shield,
-      title: 'Secure Payments',
-      description: '100% protected checkout',
-    },
-    {
-      icon: RefreshCw,
-      title: 'Easy Returns',
-      description: '30-day return policy',
-    },
+    { icon: Truck, title: 'Free Shipping', description: 'On orders over $150' },
+    { icon: Shield, title: 'Secure Payments', description: '100% protected checkout' },
+    { icon: RefreshCw, title: 'Easy Returns', description: '30-day return policy' },
   ];
 
   return (
@@ -55,14 +23,13 @@ export default function Home() {
         <div className="section-container">
           <div className="flex min-h-[70vh] flex-col items-center justify-center py-20 text-center lg:min-h-[80vh]">
             <span className="mb-4 inline-block rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent">
-              New Collection Available
+              Premium Collection Available
             </span>
             <h1 className="mb-6 max-w-3xl font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Timeless Essentials for the Modern Wardrobe
+              Fine Wines &amp; Spirits for the Discerning Palate
             </h1>
             <p className="mb-8 max-w-xl text-lg text-muted-foreground">
-              Discover our curated collection of premium clothing and accessories. 
-              Crafted with care, designed to last.
+              Discover our curated collection of world-class wines, champagnes, and premium spirits.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
               <Link to="/products" className="btn-accent group">
@@ -104,7 +71,7 @@ export default function Home() {
               Featured Products
             </h2>
             <p className="max-w-lg text-muted-foreground">
-              Handpicked pieces from our latest collection, chosen for their exceptional quality and timeless appeal.
+              Handpicked selections from our latest collection, chosen for their exceptional quality.
             </p>
           </div>
 
@@ -113,8 +80,8 @@ export default function Home() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {featuredProducts.map((product, index) => (
-                <div 
-                  key={product.id} 
+                <div
+                  key={product.id}
                   className="animate-slide-up"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
@@ -140,9 +107,9 @@ export default function Home() {
             Join Our Newsletter
           </h2>
           <p className="mx-auto mb-8 max-w-lg opacity-90">
-            Subscribe to receive updates on new arrivals, special offers, and style inspiration.
+            Subscribe to receive updates on new arrivals, special offers, and tasting events.
           </p>
-          <form className="mx-auto flex max-w-md flex-col gap-3 sm:flex-row">
+          <form className="mx-auto flex max-w-md flex-col gap-3 sm:flex-row" onSubmit={(e) => e.preventDefault()}>
             <input
               type="email"
               placeholder="Enter your email"

@@ -1,45 +1,16 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-
-// Types
-export interface Product {
-  id: number;
-  title: string;
-  image: string;
-  price: number;
-  originalPrice?: number;
-  category: string;
-  description: string;
-  featured?: boolean;
-  rating?: number;
-  reviews?: number;
-}
-
-export interface CartItem extends Product {
-  quantity: number;
-}
-
-interface CartState {
-  items: CartItem[];
-  isOpen: boolean;
-}
-
-type CartAction =
-  | { type: 'ADD_TO_CART'; payload: Product }
-  | { type: 'REMOVE_FROM_CART'; payload: number }
-  | { type: 'UPDATE_QUANTITY'; payload: { id: number; quantity: number } }
-  | { type: 'CLEAR_CART' }
-  | { type: 'TOGGLE_CART' }
-  | { type: 'OPEN_CART' }
-  | { type: 'CLOSE_CART' }
-  | { type: 'LOAD_CART'; payload: CartItem[] };
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
+import type { Product, CartItem } from '@/lib/types';
 
 interface CartContextType {
-  items: CartItem[];
+  items: (CartItem & { product: Product })[];
   isOpen: boolean;
-  addToCart: (product: Product) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
-  clearCart: () => void;
+  loading: boolean;
+  addToCart: (product: Product) => Promise<void>;
+  removeFromCart: (cartItemId: string) => Promise<void>;
+  updateQuantity: (cartItemId: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   toggleCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -47,149 +18,149 @@ interface CartContextType {
   subtotal: number;
   tax: number;
   total: number;
+  requiresAuth: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+const TAX_RATE = 0.08;
 
-const CART_STORAGE_KEY = 'ecommerce-cart';
-const TAX_RATE = 0.08; // 8% tax
-
-// Reducer function
-function cartReducer(state: CartState, action: CartAction): CartState {
-  switch (action.type) {
-    case 'ADD_TO_CART': {
-      const existingItem = state.items.find(item => item.id === action.payload.id);
-      
-      if (existingItem) {
-        // Increase quantity if item already exists
-        return {
-          ...state,
-          items: state.items.map(item =>
-            item.id === action.payload.id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          ),
-        };
-      }
-      
-      // Add new item
-      return {
-        ...state,
-        items: [...state.items, { ...action.payload, quantity: 1 }],
-      };
-    }
-    
-    case 'REMOVE_FROM_CART':
-      return {
-        ...state,
-        items: state.items.filter(item => item.id !== action.payload),
-      };
-    
-    case 'UPDATE_QUANTITY': {
-      if (action.payload.quantity <= 0) {
-        return {
-          ...state,
-          items: state.items.filter(item => item.id !== action.payload.id),
-        };
-      }
-      
-      return {
-        ...state,
-        items: state.items.map(item =>
-          item.id === action.payload.id
-            ? { ...item, quantity: action.payload.quantity }
-            : item
-        ),
-      };
-    }
-    
-    case 'CLEAR_CART':
-      return { ...state, items: [] };
-    
-    case 'TOGGLE_CART':
-      return { ...state, isOpen: !state.isOpen };
-    
-    case 'OPEN_CART':
-      return { ...state, isOpen: true };
-    
-    case 'CLOSE_CART':
-      return { ...state, isOpen: false };
-    
-    case 'LOAD_CART':
-      return { ...state, items: action.payload };
-    
-    default:
-      return state;
-  }
-}
-
-// Provider component
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, {
-    items: [],
-    isOpen: false,
-  });
+  const { user } = useAuth();
+  const [items, setItems] = useState<(CartItem & { product: Product })[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Load cart from localStorage on mount
-  useEffect(() => {
+  const fetchCart = useCallback(async () => {
+    if (!user) {
+      setItems([]);
+      return;
+    }
+
+    setLoading(true);
     try {
-      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart);
-        dispatch({ type: 'LOAD_CART', payload: parsedCart });
+      const { data, error } = await supabase
+        .from('cart_items')
+        .select('*, product:products(*)')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const cartItems = (data || []).map((item: any) => ({
+        id: item.id,
+        user_id: item.user_id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        product: item.product,
+      }));
+
+      setItems(cartItems);
+    } catch (err) {
+      console.error('Error fetching cart:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Fetch cart when user changes
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  const addToCart = async (product: Product) => {
+    if (!user) return;
+
+    try {
+      // Check if already in cart
+      const existing = items.find((item) => item.product_id === product.id);
+
+      if (existing) {
+        const { error } = await supabase
+          .from('cart_items')
+          .update({ quantity: existing.quantity + 1 })
+          .eq('id', existing.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('cart_items')
+          .insert({ user_id: user.id, product_id: product.id, quantity: 1 });
+
+        if (error) throw error;
       }
-    } catch (error) {
-      console.error('Error loading cart from localStorage:', error);
-    }
-  }, []);
 
-  // Save cart to localStorage whenever items change
-  useEffect(() => {
+      await fetchCart();
+    } catch (err) {
+      console.error('Error adding to cart:', err);
+      throw err;
+    }
+  };
+
+  const removeFromCart = async (cartItemId: string) => {
+    if (!user) return;
+
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
-    } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
-    }
-  }, [state.items]);
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('id', cartItemId);
 
-  // Calculate totals
-  const totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      if (error) throw error;
+      await fetchCart();
+    } catch (err) {
+      console.error('Error removing from cart:', err);
+    }
+  };
+
+  const updateQuantity = async (cartItemId: string, quantity: number) => {
+    if (!user) return;
+
+    try {
+      if (quantity <= 0) {
+        await removeFromCart(cartItemId);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('cart_items')
+        .update({ quantity })
+        .eq('id', cartItemId);
+
+      if (error) throw error;
+      await fetchCart();
+    } catch (err) {
+      console.error('Error updating quantity:', err);
+    }
+  };
+
+  const clearCart = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setItems([]);
+    } catch (err) {
+      console.error('Error clearing cart:', err);
+    }
+  };
+
+  const toggleCart = () => setIsOpen((prev) => !prev);
+  const openCart = () => setIsOpen(true);
+  const closeCart = () => setIsOpen(false);
+
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
-  // Actions
-  const addToCart = (product: Product) => {
-    dispatch({ type: 'ADD_TO_CART', payload: product });
-  };
-
-  const removeFromCart = (id: number) => {
-    dispatch({ type: 'REMOVE_FROM_CART', payload: id });
-  };
-
-  const updateQuantity = (id: number, quantity: number) => {
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
-  };
-
-  const clearCart = () => {
-    dispatch({ type: 'CLEAR_CART' });
-  };
-
-  const toggleCart = () => {
-    dispatch({ type: 'TOGGLE_CART' });
-  };
-
-  const openCart = () => {
-    dispatch({ type: 'OPEN_CART' });
-  };
-
-  const closeCart = () => {
-    dispatch({ type: 'CLOSE_CART' });
-  };
-
   const value: CartContextType = {
-    items: state.items,
-    isOpen: state.isOpen,
+    items,
+    isOpen,
+    loading,
     addToCart,
     removeFromCart,
     updateQuantity,
@@ -201,12 +172,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     subtotal,
     tax,
     total,
+    requiresAuth: !user,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
-// Custom hook
 export function useCart() {
   const context = useContext(CartContext);
   if (context === undefined) {

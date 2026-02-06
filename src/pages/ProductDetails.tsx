@@ -1,62 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Truck, Shield, Heart } from 'lucide-react';
-import { Product, useCart } from '@/context/CartContext';
+import type { Product } from '@/lib/types';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { ProductCard } from '@/components/ProductCard';
 import { QuantitySelector } from '@/components/QuantitySelector';
 import { PageLoader } from '@/components/Loader';
 import { toast } from 'sonner';
-import productsData from '@/data/products.json';
+import { useProduct } from '@/hooks/useProducts';
 
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart, openCart, items } = useCart();
-  
-  const [product, setProduct] = useState<Product | null>(null);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { product, relatedProducts, loading } = useProduct(id);
+
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      setLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        const foundProduct = productsData.find(p => p.id === Number(id));
-        
-        if (foundProduct) {
-          setProduct(foundProduct as Product);
-          
-          // Get related products from same category
-          const related = productsData
-            .filter(p => p.category === foundProduct.category && p.id !== foundProduct.id)
-            .slice(0, 4);
-          setRelatedProducts(related as Product[]);
-        } else {
-          navigate('/products');
-        }
-      } catch (error) {
-        console.error('Error fetching product:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleAddToCart = async () => {
+    if (!user) {
+      toast.error('Please sign in to add items to your cart');
+      navigate('/auth');
+      return;
+    }
 
-    fetchProduct();
-    setQuantity(1);
-    window.scrollTo(0, 0);
-  }, [id, navigate]);
-
-  const handleAddToCart = () => {
     if (product) {
-      for (let i = 0; i < quantity; i++) {
-        addToCart(product);
+      try {
+        for (let i = 0; i < quantity; i++) {
+          await addToCart(product);
+        }
+        toast.success(`${quantity} × ${product.title} added to cart`);
+        openCart();
+      } catch {
+        toast.error('Failed to add item to cart');
       }
-      toast.success(`${quantity} × ${product.title} added to cart`);
-      openCart();
     }
   };
 
@@ -68,18 +48,22 @@ export default function ProductDetails() {
   };
 
   // Check if item is already in cart
-  const cartItem = items.find(item => item.id === product?.id);
+  const cartItem = items.find((item) => item.product_id === product?.id);
 
-  if (loading) {
-    return <PageLoader />;
-  }
+  if (loading) return <PageLoader />;
 
   if (!product) {
-    return null;
+    return (
+      <div className="section-container py-16 text-center">
+        <p className="text-muted-foreground">Product not found.</p>
+        <Link to="/products" className="btn-primary mt-4 inline-block">
+          Back to Shop
+        </Link>
+      </div>
+    );
   }
 
-  // Create gallery images (using same image for demo)
-  const galleryImages = [product.image, product.image, product.image];
+  const galleryImages = [product.image, product.image, product.image].filter(Boolean) as string[];
 
   return (
     <div className="animate-fade-in">
@@ -99,16 +83,13 @@ export default function ProductDetails() {
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Image Gallery */}
           <div className="space-y-4">
-            {/* Main Image */}
             <div className="aspect-square overflow-hidden rounded-lg bg-secondary">
               <img
-                src={galleryImages[selectedImage]}
+                src={galleryImages[selectedImage] || '/placeholder.svg'}
                 alt={product.title}
                 className="h-full w-full object-cover"
               />
             </div>
-            
-            {/* Thumbnails */}
             <div className="flex gap-3">
               {galleryImages.map((img, index) => (
                 <button
@@ -132,17 +113,12 @@ export default function ProductDetails() {
 
           {/* Product Info */}
           <div className="flex flex-col">
-            {/* Category */}
             <p className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
               {product.category}
             </p>
 
-            {/* Title */}
-            <h1 className="mb-4 font-display text-3xl font-semibold lg:text-4xl">
-              {product.title}
-            </h1>
+            <h1 className="mb-4 font-display text-3xl font-semibold lg:text-4xl">{product.title}</h1>
 
-            {/* Rating */}
             {product.rating && (
               <div className="mb-4 flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -159,62 +135,63 @@ export default function ProductDetails() {
                 </div>
                 <span className="text-sm font-medium">{product.rating}</span>
                 {product.reviews && (
-                  <span className="text-sm text-muted-foreground">
-                    ({product.reviews} reviews)
-                  </span>
+                  <span className="text-sm text-muted-foreground">({product.reviews} reviews)</span>
                 )}
               </div>
             )}
 
-            {/* Price */}
             <div className="mb-6 flex items-center gap-3">
               <span className="text-2xl font-semibold">{formatPrice(product.price)}</span>
-              {product.originalPrice && (
+              {product.original_price && (
                 <>
                   <span className="text-lg text-muted-foreground line-through">
-                    {formatPrice(product.originalPrice)}
+                    {formatPrice(product.original_price)}
                   </span>
                   <span className="badge-accent">
-                    Save {Math.round((1 - product.price / product.originalPrice) * 100)}%
+                    Save {Math.round((1 - product.price / product.original_price) * 100)}%
                   </span>
                 </>
               )}
             </div>
 
-            {/* Description */}
             <p className="mb-8 text-muted-foreground">{product.description}</p>
 
-            {/* Quantity & Add to Cart */}
+            {/* Stock info */}
+            {product.stock <= 5 && product.stock > 0 && (
+              <p className="mb-4 text-sm text-destructive">Only {product.stock} left in stock!</p>
+            )}
+            {product.stock === 0 && (
+              <p className="mb-4 text-sm text-destructive font-medium">Out of stock</p>
+            )}
+
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
               <QuantitySelector
                 quantity={quantity}
-                onIncrease={() => setQuantity(q => q + 1)}
-                onDecrease={() => setQuantity(q => Math.max(1, q - 1))}
+                onIncrease={() => setQuantity((q) => Math.min(q + 1, product.stock))}
+                onDecrease={() => setQuantity((q) => Math.max(1, q - 1))}
               />
-              
+
               <button
                 onClick={handleAddToCart}
                 className="btn-accent flex-1"
+                disabled={product.stock === 0}
               >
-                Add to Cart — {formatPrice(product.price * quantity)}
+                {product.stock === 0
+                  ? 'Out of Stock'
+                  : `Add to Cart — ${formatPrice(product.price * quantity)}`}
               </button>
 
-              <button
-                className="btn-secondary px-4"
-                aria-label="Add to wishlist"
-              >
+              <button className="btn-secondary px-4" aria-label="Add to wishlist">
                 <Heart className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Cart info */}
             {cartItem && (
               <p className="mb-6 text-sm text-muted-foreground">
                 You have {cartItem.quantity} of this item in your cart
               </p>
             )}
 
-            {/* Features */}
             <div className="space-y-4 border-t border-border pt-6">
               <div className="flex items-center gap-3">
                 <Truck className="h-5 w-5 text-muted-foreground" />
@@ -237,12 +214,10 @@ export default function ProductDetails() {
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <section className="mt-16 border-t border-border pt-16">
-            <h2 className="mb-8 font-display text-2xl font-semibold">
-              You May Also Like
-            </h2>
+            <h2 className="mb-8 font-display text-2xl font-semibold">You May Also Like</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {relatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {relatedProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
               ))}
             </div>
           </section>
